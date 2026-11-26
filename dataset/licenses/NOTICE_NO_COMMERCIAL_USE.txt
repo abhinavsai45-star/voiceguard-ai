@@ -1,0 +1,3 @@
+The fildes in MLAAD-tiny/fake are released under a CC BY-NC license, which prohibits any commercial use.
+For commercial purposes, you must contact nicolas.mueller@aisec.fraunhofer.de and obtain a license.
+This applies to model training, model evaluation, hyperparameter tuning, and any other use of the data.

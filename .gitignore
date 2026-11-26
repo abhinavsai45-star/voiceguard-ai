@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local user data and machine-specific session signing key
+data/*.sqlite3
+data/session_secret.key
+
+# Keep the trained checkpoint and dataset license notices, but do not upload audio.
+dataset/real/
+dataset/fake/
