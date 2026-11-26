@@ -56,6 +56,8 @@ def close_db(_=None):
 
 
 def init_db():
+    # The deploy filesystem may not contain an empty data/ directory from the repo.
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         conn.executescript("""
           CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, created_at TEXT NOT NULL);
