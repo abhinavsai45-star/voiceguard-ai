@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 from flask import Flask, g, jsonify, redirect, render_template, request, send_file, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
 ROOT = Path(__file__).resolve().parent
@@ -201,6 +202,17 @@ def stats():
 @app.errorhandler(413)
 def too_large(_):
     return jsonify(error="Audio must be 25 MB or smaller."), 413
+
+
+@app.errorhandler(Exception)
+def unexpected_error(exc):
+    # Keep API failures machine-readable so the browser can show a useful message.
+    if isinstance(exc, HTTPException):
+        return exc
+    app.logger.exception("Unhandled request error", exc_info=exc)
+    if request.path.startswith("/api/"):
+        return jsonify(error="The server could not complete this request. Check the service logs."), 500
+    return "The server encountered an error. Please try again.", 500
 
 
 # Gunicorn imports the Flask application instead of running this file as a script.
