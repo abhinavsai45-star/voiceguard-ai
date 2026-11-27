@@ -34,7 +34,7 @@ The trained checkpoint is `models/voiceguard_cnn.pt`; validation metrics are in 
 
 ## Administrator sign-in
 
-For a hosted Render deployment, open the service's **Environment** settings and add `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Use a strong, unique password and keep it private. Save the settings and redeploy. On the site, choose **Admin sign in**; administrators can view account totals and the latest analyses across user accounts. Admin accounts are not created through public registration.
+For a hosted Render deployment, open the service's **Environment** settings and add `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Use a strong, unique password and keep it private. Save the settings and redeploy. On the site, choose **Admin sign in**; administrators can view each user's email, signup date, analysis count, and the latest analyses across user accounts. Passwords are never shown. Admin accounts are not created through public registration.
 
 ## Limitations
 

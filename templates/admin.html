@@ -18,7 +18,8 @@
       <article class="admin-stat"><span>REAL VOICE</span><b id="admin-real">—</b></article>
       <article class="admin-stat"><span>AI-GENERATED</span><b id="admin-fake">—</b></article>
     </section>
-    <section class="admin-panel"><h2>Recent user analyses</h2><p class="muted">Latest 50 records across all user accounts.</p><div class="table-scroll" id="admin-recent"></div></section>
+    <section class="admin-panel"><h2>User accounts</h2><p class="muted">Registered users and their analysis counts. Passwords are never displayed.</p><div class="table-scroll" id="admin-user-list"></div></section>
+    <section class="admin-panel" style="margin-top:14px"><h2>Recent user analyses</h2><p class="muted">Latest 50 records across all user accounts.</p><div class="table-scroll" id="admin-recent"></div></section>
   </main>
   <script src="{{ url_for('static', filename='admin.js') }}"></script>
 </body>

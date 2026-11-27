@@ -176,11 +176,15 @@ def admin_overview():
     user_count = db().execute("SELECT COUNT(*) FROM users WHERE role='user'").fetchone()[0]
     total = db().execute("SELECT COUNT(*) FROM analyses").fetchone()[0]
     labels = {row["label"]: row["n"] for row in db().execute("SELECT label,COUNT(*) n FROM analyses GROUP BY label")}
+    users = db().execute("""SELECT u.id,u.email,u.created_at,COUNT(a.id) analysis_count
+        FROM users u LEFT JOIN analyses a ON a.user_id=u.id
+        WHERE u.role='user' GROUP BY u.id,u.email,u.created_at
+        ORDER BY u.created_at DESC""").fetchall()
     recent = db().execute("""SELECT a.id,a.filename,a.created_at,a.label,a.confidence,a.risk,u.email
         FROM analyses a JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 50""").fetchall()
     return jsonify(users=user_count, total=total, real=labels.get("REAL VOICE", 0),
                    fake=labels.get("AI-GENERATED VOICE", 0), uncertain=labels.get("UNCERTAIN", 0),
-                   recent=[dict(row) for row in recent])
+                   user_list=[dict(row) for row in users], recent=[dict(row) for row in recent])
 
 
 @app.post("/api/analyze")
