@@ -29,7 +29,12 @@ The trained checkpoint is `models/voiceguard_cnn.pt`; validation metrics are in 
 - CNN inference after training; prediction confidence, risk category, timestamp and explanatory caveat.
 - Private local analysis history with JSON report download and deletion.
 - Registration, login and logout with password hashing.
+- Separate user and administrator sign-in, with administrator credentials configured through environment variables.
 - Dashboard counts, recent activity, model status and safety guidance.
+
+## Administrator sign-in
+
+For a hosted Render deployment, open the service's **Environment** settings and add `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Use a strong, unique password and keep it private. Save the settings and redeploy. On the site, choose **Admin sign in**; administrators can view account totals and the latest analyses across user accounts. Admin accounts are not created through public registration.
 
 ## Limitations
 

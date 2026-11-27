@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VoiceGuard Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body{font-family:'DM Sans',Arial,sans-serif;background:#080c11;color:#e8f0f4;margin:0}.admin-shell{max-width:1180px;margin:auto;padding:32px 22px}.admin-head{display:flex;justify-content:space-between;align-items:center;gap:18px;border-bottom:1px solid #1c2a36;padding-bottom:22px}.admin-head h1{font-size:23px;margin:0}.admin-head p,.muted{color:#87969e;font-size:12px}.admin-head p{margin:7px 0 0}.admin-head button{border:1px solid #34434c;border-radius:5px;background:#101923;color:#dce7e8;padding:10px 14px;cursor:pointer}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:22px 0}.admin-stat,.admin-panel{background:#0d131b;border:1px solid #1c2a36;border-radius:8px;padding:18px}.admin-stat span{display:block;color:#9aa8ac;font-size:10px;letter-spacing:1px}.admin-stat b{display:block;font-size:28px;margin-top:9px}.admin-panel h2{font-size:16px;margin:0}.table-scroll{overflow:auto;margin-top:15px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:11px;border-bottom:1px solid #1c2a36;white-space:nowrap}th{color:#93a1a7;font-size:10px;letter-spacing:.6px}#admin-error{color:#ff9699;padding:10px}@media(max-width:700px){.admin-stats{grid-template-columns:repeat(2,1fr)}.admin-head{align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-head"><div><h1>VoiceGuard administration</h1><p>Signed in as {{ email }} · Manage service activity</p></div><button id="admin-logout">Sign out</button></header>
+    <div id="admin-error" class="hidden"></div>
+    <section class="admin-stats">
+      <article class="admin-stat"><span>USER ACCOUNTS</span><b id="admin-users">—</b></article>
+      <article class="admin-stat"><span>TOTAL ANALYSES</span><b id="admin-total">—</b></article>
+      <article class="admin-stat"><span>REAL VOICE</span><b id="admin-real">—</b></article>
+      <article class="admin-stat"><span>AI-GENERATED</span><b id="admin-fake">—</b></article>
+    </section>
+    <section class="admin-panel"><h2>Recent user analyses</h2><p class="muted">Latest 50 records across all user accounts.</p><div class="table-scroll" id="admin-recent"></div></section>
+  </main>
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>

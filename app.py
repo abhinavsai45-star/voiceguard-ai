@@ -61,16 +61,28 @@ def init_db():
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         conn.executescript("""
-          CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, created_at TEXT NOT NULL);
+          CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user', created_at TEXT NOT NULL);
           CREATE TABLE IF NOT EXISTS analyses(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, filename TEXT NOT NULL, created_at TEXT NOT NULL, label TEXT NOT NULL, confidence REAL, risk TEXT NOT NULL, details TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id));
         """)
+        user_columns = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
+        if "role" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
 
 
 def login_required(fn):
     @wraps(fn)
     def wrapped(*args, **kwargs):
-        if not session.get("user_id"):
+        if not session.get("user_id") or session.get("role", "user") != "user":
             return jsonify({"error": "Please sign in first."}), 401
+        return fn(*args, **kwargs)
+    return wrapped
+
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        if session.get("role") != "admin":
+            return jsonify(error="Admin sign-in required."), 401
         return fn(*args, **kwargs)
     return wrapped
 
@@ -100,7 +112,9 @@ def classify_audio(raw: bytes, filename: str):
 
 @app.get("/")
 def home():
-    if session.get("user_id"):
+    if session.get("role") == "admin":
+        return render_template("admin.html", email=session.get("email", "Admin"))
+    if session.get("user_id") and session.get("role", "user") == "user":
         return render_template("index.html", page="dashboard", email=session.get("email"))
     return render_template("index.html", page="welcome", email="")
 
@@ -112,11 +126,12 @@ def register():
     if "@" not in email or len(password) < 8:
         return jsonify(error="Enter a valid email and a password of at least 8 characters."), 400
     try:
-        cur = db().execute("INSERT INTO users(email,password,created_at) VALUES(?,?,?)", (email, generate_password_hash(password), datetime.now(timezone.utc).isoformat()))
+        cur = db().execute("INSERT INTO users(email,password,role,created_at) VALUES(?,?,?,?)", (email, generate_password_hash(password), "user", datetime.now(timezone.utc).isoformat()))
         db().commit()
     except sqlite3.IntegrityError:
         return jsonify(error="An account with that email already exists."), 409
-    session.update(user_id=cur.lastrowid, email=email)
+    session.clear()
+    session.update(user_id=cur.lastrowid, email=email, role="user")
     return jsonify(ok=True)
 
 
@@ -126,7 +141,26 @@ def login():
     row = db().execute("SELECT * FROM users WHERE email=?", (str(data.get("email", "")).strip().lower(),)).fetchone()
     if not row or not check_password_hash(row["password"], str(data.get("password", ""))):
         return jsonify(error="Email or password is incorrect."), 401
-    session.update(user_id=row["id"], email=row["email"])
+    if row["role"] != "user":
+        return jsonify(error="Use the admin sign-in option for this account."), 403
+    session.clear()
+    session.update(user_id=row["id"], email=row["email"], role="user")
+    return jsonify(ok=True)
+
+
+@app.post("/api/admin/login")
+def admin_login():
+    data = request.get_json(silent=True) or {}
+    configured_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    configured_password = os.environ.get("ADMIN_PASSWORD", "")
+    if not configured_email or not configured_password:
+        return jsonify(error="Admin sign-in is not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD in Render."), 503
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
+    if not secrets.compare_digest(email, configured_email) or not secrets.compare_digest(password, configured_password):
+        return jsonify(error="Admin email or password is incorrect."), 401
+    session.clear()
+    session.update(email=configured_email, role="admin")
     return jsonify(ok=True)
 
 
@@ -134,6 +168,19 @@ def login():
 def logout():
     session.clear()
     return jsonify(ok=True)
+
+
+@app.get("/api/admin/overview")
+@admin_required
+def admin_overview():
+    user_count = db().execute("SELECT COUNT(*) FROM users WHERE role='user'").fetchone()[0]
+    total = db().execute("SELECT COUNT(*) FROM analyses").fetchone()[0]
+    labels = {row["label"]: row["n"] for row in db().execute("SELECT label,COUNT(*) n FROM analyses GROUP BY label")}
+    recent = db().execute("""SELECT a.id,a.filename,a.created_at,a.label,a.confidence,a.risk,u.email
+        FROM analyses a JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 50""").fetchall()
+    return jsonify(users=user_count, total=total, real=labels.get("REAL VOICE", 0),
+                   fake=labels.get("AI-GENERATED VOICE", 0), uncertain=labels.get("UNCERTAIN", 0),
+                   recent=[dict(row) for row in recent])
 
 
 @app.post("/api/analyze")
